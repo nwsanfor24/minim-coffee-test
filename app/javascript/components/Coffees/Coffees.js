@@ -36,14 +36,9 @@ const Coffees = () => {
     const [coffees, setCoffees] = useState([])
 
     useEffect(() => {
-        // Get all of our coffees from api
-        // Update coffees in our state
-
         axios.get('/api/v1/coffees.json')
-        .then( resp => {
-            setCoffees(resp.data.data)
-        })
-        .catch( resp => console.log(resp) )
+        .then(resp => setCoffees(resp.data.data))
+        .catch(resp => console.log(resp))
     }, [coffees.length])
 
     const grid = coffees.map( item => {
