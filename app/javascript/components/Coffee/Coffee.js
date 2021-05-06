@@ -67,6 +67,12 @@ const Coffee = (props) => {
     .catch(resp => {})
   }
 
+  const setRating = (score, e) => {
+    e.preventDefault()
+
+    setReview({...review, score})
+  }
+
   return (
     <Wrapper>
       {loaded && (
@@ -84,6 +90,7 @@ const Coffee = (props) => {
             <ReviewForm
                 handleChange={handleChange}
                 handleSubmit={handleSubmit}
+                setRating={setRating}
                 attributes={coffee.data.attributes}
                 review={review}
             />
