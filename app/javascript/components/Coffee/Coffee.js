@@ -1,28 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import axios from "axios";
 import Header from "./Header";
+import ReviewForm from "./ReviewForm";
 import styled from "styled-components";
 
 const Wrapper = styled.div`
-    margin-left: auto;
-    margin-right: auto;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-`
+  margin-left: auto;
+  margin-right: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+`;
 
 const Column = styled.div`
-    background: #fff;
-    height: 100vh;
-    overflow: scroll;
+  background: #fff;
+  height: 100vh;
+  overflow: scroll;
 
-    &:last-child {
-        background: #000;
-    }
-`
+  &:last-child {
+    background: #000;
+  }
+`;
 
 const Main = styled.div`
-    padding-left: 50px;
-`
+  padding-left: 50px;
+`;
 
 const Coffee = (props) => {
   const [coffee, setCoffee] = useState({});
@@ -42,22 +43,39 @@ const Coffee = (props) => {
       .catch((resp) => console.log(resp));
   }, []);
 
+  const handleChange = (e) => {
+    e.preventDefault()
+
+    setReview(Object.assign)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+  }
+
   return (
     <Wrapper>
-      <Column>
-        <Main>
-          {loaded && (
-            <Header
-              attributes={coffee.data.attributes}
-              review={coffee.included}
+      {loaded && (
+        <Fragment>
+          <Column>
+            <Main>
+              <Header
+                attributes={coffee.data.attributes}
+                review={coffee.included}
+              />
+              <div className="reviews"></div>
+            </Main>
+          </Column>
+          <Column>
+            <ReviewForm
+                handleChange={handleChange}
+                handleSubmit={handleSubmit}
+                attributes={coffee.data.attributes}
+                review={review}
             />
-          )}
-          <div className="reviews"></div>
-        </Main>
-      </Column>
-      <Column>
-        <div className="review-form">[Review Form Goes Here.]</div>
-      </Column>
+          </Column>
+        </Fragment>
+      )}
     </Wrapper>
   );
 };
