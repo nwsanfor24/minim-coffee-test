@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react'
 import axios from 'axios'
+import Coffee from './Coffee'
 
 const Coffees = () => {
     const [coffees, setCoffees] = useState([])
@@ -15,17 +16,25 @@ const Coffees = () => {
         .catch( resp => console.log(resp) )
     }, [coffees.length])
 
-    const list = coffees.map( item => {
+    const grid = coffees.map( item => {
         return (
-            <li key={item.attributes.name}>{item.attributes.name}</li>
+            <Coffee 
+                key={item.attributes.name}
+                attributes={item.attributes}
+            />
         )
     })
 
     return (
-        <Fragment>
-            <div>This is the Coffees#index view for our app</div>
-            <ul>{list}</ul>
-        </Fragment>
+        <div className="home">
+            <div className="header">
+                <h1>CoffeeReviews</h1>
+                <div className="subheader">Honest, unbiased coffee reviews.</div>
+            </div>
+            <div className="grid">
+                <ul>{grid}</ul>
+            </div>
+        </div>
     )
 }
 
