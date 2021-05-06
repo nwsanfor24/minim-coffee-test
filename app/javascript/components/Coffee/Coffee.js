@@ -2,6 +2,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import axios from "axios";
 import Header from "./Header";
 import ReviewForm from "./ReviewForm";
+import Review from './Review'
 import styled from "styled-components";
 
 const Wrapper = styled.div`
@@ -51,12 +52,14 @@ const Coffee = (props) => {
     console.log('review:', review)
   }
 
+  // Submit/Create a new review
   const handleSubmit = (e) => {
     e.preventDefault()
 
     const csrfToken = document.querySelector('[name=csrf-token]').content
     axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken
 
+    // Get airline id
     const coffee_id = coffee.data.id
     axios.post('/api/v1/reviews', {review, coffee_id})
     .then(resp => {
@@ -64,14 +67,27 @@ const Coffee = (props) => {
         setCoffee({...coffee, included})
         setReview({title: '', description: '', score: 0})
     })
-    .catch(resp => {})
+    .catch(resp => console.log(resp))
   }
 
+  // set score
   const setRating = (score, e) => {
     e.preventDefault()
-
     setReview({...review, score})
   }
+
+  let reviews
+  if (loaded && coffee.included) {
+    reviews = coffee.included.map((item, index) => {
+      return (
+        <Review 
+          key={index}
+          attributes={item.attributes}
+        />
+      )
+    })
+  }
+  
 
   return (
     <Wrapper>
@@ -83,7 +99,7 @@ const Coffee = (props) => {
                 attributes={coffee.data.attributes}
                 review={coffee.included}
               />
-              <div className="reviews"></div>
+              {reviews}
             </Main>
           </Column>
           <Column>
