@@ -46,11 +46,23 @@ const Coffee = (props) => {
   const handleChange = (e) => {
     e.preventDefault()
 
-    setReview(Object.assign)
+    setReview(Object.assign({}, review, {[e.target.name]: e.target.value}))
+
+    console.log('review:', review)
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    const csrfToken = document.querySelector('[name=csrf-token]').content
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken
+
+    const coffee_id = coffee.data.id
+    axios.post('/api/v1/reviews', {review, coffee_id})
+    .then(resp => {
+        debugger
+    })
+    .catch(resp => {})
   }
 
   return (
