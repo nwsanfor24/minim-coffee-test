@@ -60,7 +60,9 @@ const Coffee = (props) => {
     const coffee_id = coffee.data.id
     axios.post('/api/v1/reviews', {review, coffee_id})
     .then(resp => {
-        debugger
+        const included = [...coffee.included, resp.data.data]
+        setCoffee({...coffee, included})
+        setReview({title: '', description: '', score: 0})
     })
     .catch(resp => {})
   }
