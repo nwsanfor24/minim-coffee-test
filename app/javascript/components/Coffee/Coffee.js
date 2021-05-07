@@ -4,6 +4,7 @@ import Header from "./Header";
 import ReviewForm from "./ReviewForm";
 import Review from './Review'
 import styled from "styled-components";
+import AxiosWrapper from '../../utils/Requests/AxiosWrapper'
 
 const Wrapper = styled.div`
   margin-left: auto;
@@ -13,14 +14,22 @@ const Wrapper = styled.div`
 `;
 
 const Column = styled.div`
-  background: #fff;
+  background: #fff; 
+  max-width: 50%;
+  width: 50%;
+  float: left; 
   height: 100vh;
+  overflow-x: scroll;
+  overflow-y: scroll; 
   overflow: scroll;
-
-  &:last-child {
-    background: #000;
+  &::-webkit-scrollbar {
+    display: none;
   }
-`;
+  &:last-child {
+    background: black;
+    border-top: 1px solid rgba(255,255,255,0.5);
+  }
+`
 
 const Main = styled.div`
   padding-left: 50px;
@@ -28,61 +37,87 @@ const Main = styled.div`
 
 const Coffee = (props) => {
   const [coffee, setCoffee] = useState({});
-  const [review, setReview] = useState({});
+  const [reviews, setReviews] = useState([]);
+  const [review, setReview] = useState({ title: '', description: '', score: 0 });
+  const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const slug = props.match.params.slug;
-    const url = `/api/v1/coffees/${slug}`;
 
-    axios
-      .get(url)
-      .then((resp) => {
-        setCoffee(resp.data);
-        setLoaded(true);
-      })
-      .catch((resp) => console.log(resp));
+    AxiosWrapper.get(`/api/v1/coffees/${slug}`)
+    .then((resp) => {
+      setCoffee(resp.data)
+      setReviews(resp.data.included)
+      setLoaded(true)
+    })
+    .catch(data => console.log('Error', data))
   }, []);
-
+    
+  // Modify text in review form
   const handleChange = (e) => {
-    e.preventDefault()
-
     setReview(Object.assign({}, review, {[e.target.name]: e.target.value}))
-
-    console.log('review:', review)
   }
 
-  // Submit/Create a new review
+  // Create a new review
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    const csrfToken = document.querySelector('[name=csrf-token]').content
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken
-
-    // Get airline id
-    const coffee_id = coffee.data.id
-    axios.post('/api/v1/reviews', {review, coffee_id})
-    .then(resp => {
-        const included = [...coffee.included, resp.data.data]
-        setCoffee({...coffee, included})
-        setReview({title: '', description: '', score: 0})
+    const coffee_id = parseInt(coffee.data.id)
+    AxiosWrapper.post('/api/v1/reviews', { ...review, coffee_id})
+    .then((resp) => {
+      setReviews([...reviews, resp.data.data])
+      setReview({ title: '', description: '', score: 0})
+      setError('')
     })
-    .catch(resp => console.log(resp))
+    .catch(resp => {
+      let error
+      switch(resp.message) {
+        case "Request failed with status code 401":
+          error = 'Please log in to leave a review.'
+          break
+        default:
+          error = 'Something went wrong'
+      }
+      setError(error)
+    })
+  }
+
+  // Destroy a review
+  const handleDestroy = (id, e) => {
+    e.preventDefault()
+
+    AxiosWrapper.delete(`/api/v1/reviews/${id}`)
+    .then((data) => {
+      const included = [...reviews]
+      const index = included.findIndex((data) => data.id == id)
+      included.splice(index, 1)
+
+      setReviews(included)
+    })
+    .catch(data => console.log('Error', data))
   }
 
   // set score
   const setRating = (score, e) => {
-    e.preventDefault()
-    setReview({...review, score})
+    e.preventDefault()  
+    setReview({ ...review, score })
   }
 
-  let reviews
-  if (loaded && coffee.included) {
-    reviews = coffee.included.map((item, index) => {
+  let total, average = 0
+  let userReviews
+
+  if (reviews && reviews.length > 0) {
+    total = reviews.reduce((total, review) => total + review.attributes.score, 0)
+    average = total > 0 ? (parseFloat(total) / parseFloat(reviews.length)) : 0
+    
+    userReviews = reviews.map( (review, index) => {
       return (
         <Review 
           key={index}
-          attributes={item.attributes}
+          id={review.id}
+          attributes={review.attributes}
+          handleDestroy={handleDestroy}
         />
       )
     })
@@ -91,28 +126,31 @@ const Coffee = (props) => {
 
   return (
     <Wrapper>
-      {loaded && (
+      { 
+        loaded &&
         <Fragment>
           <Column>
             <Main>
-              <Header
+              <Header 
                 attributes={coffee.data.attributes}
-                review={coffee.included}
+                reviews={reviews}
+                average={average}
               />
-              {reviews}
+              {userReviews}
             </Main>
           </Column>
           <Column>
             <ReviewForm
-                handleChange={handleChange}
-                handleSubmit={handleSubmit}
-                setRating={setRating}
-                attributes={coffee.data.attributes}
-                review={review}
+              name={coffee.data.attributes.name}
+              review={review}
+              handleChange={handleChange}
+              handleSubmit={handleSubmit}
+              setRating={setRating}
+              error={error}
             />
           </Column>
         </Fragment>
-      )}
+      }
     </Wrapper>
   );
 };
